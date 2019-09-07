@@ -14,5 +14,7 @@ const db = {
 }
 
 // TODO: define models here
+db.models.Users = require('./models/Users')(sequelize);
+db.models.Courses = require('./models/Courses')(sequelize);
 
 module.exports = db;
