@@ -10,7 +10,7 @@ const { User, Course } = db.models;
 USER ROUTING-------------------------------//
 */
 // get route returns the currently authenticated user, returns 200
-router.get('/user', async (req, res) => {
+router.get('/users', async (req, res) => {
     
 
     
@@ -18,17 +18,26 @@ router.get('/user', async (req, res) => {
 });
 
 //post route creates a new user, and returns a 201 status with no content, redirects to /
-router.post('/user', async (req, res) => {
-   
-    try {
+router.post('/users', async (req, res) => {
+    // get user data from the request body
+    const user = req.body;
+    
+    console.log(user);
 
-     res.status(201).end();
-    } catch (error){
+    // try {
+      
+        
 
-    }
 
+    //   res.status(201).end();
+    // } catch (error){
+    //  console.error('Error occured adding user to the database', error);
+    // }
+    res.status(201).end();
 });
 
 /*
 COURSE ROUTING-------------------------------//
 */
+
+module.exports = router;
