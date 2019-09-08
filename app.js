@@ -13,10 +13,14 @@ const app = express();
 // require the DB for testing
 const db = require('./db');
 
+// require routes
+const routes = require('./routes');
+
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
 // TODO setup your api routes here
+app.use('/api', routes);
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
