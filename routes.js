@@ -21,20 +21,19 @@ router.use(bodyParser.urlencoded({ extended : true }))
 /*
 USER AUTH MIDDLEWARE-------------------------------//
 */
-const authenticateUser = (req, res, next) => {
+ const authenticateUser = async (req, res, next) => {
   // declare a message variable for error handling
   let message = '';
   // get the users credentials from the auth header
   const credentials = auth(req);
-
   //if the user has credentials
   if(credentials){
     // find the user from the db
-    const user = User.findAll({
+    const user = await User.findOne({
         where: {
-            email : credentials.name
+            emailAddress : credentials.name
         }
-    })
+    });
     // if a user was successfully retrieved from the database
     if(user){
       //compare the passwords using bcrypt and users password.
@@ -54,7 +53,6 @@ const authenticateUser = (req, res, next) => {
   } else {
       message = `Authorization headers not found`
   }
-
   // if a users authentication fails, print warning message to the console:
   if(message){
     console.warn(message);
@@ -63,7 +61,6 @@ const authenticateUser = (req, res, next) => {
   } else {
     next();
   }
-
   //end user auth middleware
 }
 
@@ -71,20 +68,18 @@ const authenticateUser = (req, res, next) => {
 USER ROUTING-------------------------------//
 */
 // get route returns the currently authenticated user, returns 200
-router.get('/users', authenticateUser, async (req, res) => {
-    
-    try {
-      // check if the user is authenticated
+router.get('/users', authenticateUser, (req, res) => {
 
-      //if authenticated, retrieve the user record based on their email address
-
-      
-      res.status(200).end();
-    } catch (error){
-
-    }
-    
-    
+  // check if the user is authenticated
+  const user = req.currentUser;
+  //if authenticated, retrieve the user record based on their email address
+  if(user){
+    res.json({user})
+    res.status(200).end();
+  } else {
+    res.status(401).json({message: 'You must be authenticated to view this area'}).end();
+  }
+ 
 });
 
 //post route creates a new user, and returns a 201 status with no content, redirects to /
