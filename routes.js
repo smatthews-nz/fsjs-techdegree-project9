@@ -22,6 +22,8 @@ router.use(bodyParser.urlencoded({ extended : true }))
 USER AUTH MIDDLEWARE-------------------------------//
 */
 const authenticateUser = (req, res, next) => {
+  // declare a message variable for error handling
+  let message = '';
   // get the users credentials from the auth header
   const credentials = auth(req);
 
@@ -30,12 +32,39 @@ const authenticateUser = (req, res, next) => {
     // find the user from the db
     const user = User.findAll({
         where: {
-            id : credentials.name
+            email : credentials.name
         }
     })
-  };
+    // if a user was successfully retrieved from the database
+    if(user){
+      //compare the passwords using bcrypt and users password.
+      const authenticated = bcrypt.compareSync(credentials.pass, user.password);
+      //if the passwords match, then the user is authenticated
+      if(authenticated){
+        console.log(`Authentication successful for user: ${user.emailAddress}`);
 
-  next();
+        //store the user in the current user req object
+        req.currentUser = user;
+      } else {
+        message = `Authentication failure for user: ${credentials.name}`;
+      }
+    } else {
+        message = `User not found for user: ${credentials.name}`
+    }
+  } else {
+      message = `Authorization headers not found`
+  }
+
+  // if a users authentication fails, print warning message to the console:
+  if(message){
+    console.warn(message);
+    //return a 401 unauthorized error, and end the request
+    res.status(401).json({message: 'Access Denied'}).end();
+  } else {
+    next();
+  }
+
+  //end user auth middleware
 }
 
 /*
@@ -63,26 +92,23 @@ router.post('/users', async (req, res) => {
     //use bcrypt to has the users password
     const hashedPword = bcrypt.hashSync(req.body.password);
 
-    const credentials = auth(req);
-    console.log(credentials.name);
+    // get the user details
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const emailAddress = req.body.emailAddress;
+    // build the user so it can be passed to the create method with a single variable.
+    const user = {firstName, lastName, emailAddress, hashedPword};
 
-    // // get the user details
-    // const firstName = req.body.firstName;
-    // const lastName = req.body.lastName;
-    // const emailAddress = req.body.emailAddress;
-    // // build the user so it can be passed to the create method with a single variable.
-    // const user = {firstName, lastName, emailAddress, hashedPword};
-
-    // try {
-    //   await User.create({user});
-    //   // if successful creating the user, send a 201 response, and end.
-    //   res.status(201).end();
-    //   //redirect the user to the `/` route
-    //   res.redirect('/');
-    // } catch (error){
-    //   console.error('Error occured adding user to the database', error);
-    // }
-
+    try {
+      await User.create({user});
+      // if successful creating the user, send a 201 response, and end.
+      res.status(201).end();
+      //redirect the user to the `/` route
+      res.redirect('/');
+    } catch (error){
+      console.error('Error occured adding user to the database', error);
+    }
+    //end create new user route
 });
 
 /*
