@@ -4,10 +4,15 @@ const express = require('express');
 const router = express.Router();
 //require db
 const db = require('./db');
-const bodyParser = require('body-parser');
+//require db models
 const { User, Course } = db.models;
+//require bodyParser to access the request body
+const bodyParser = require('body-parser');
+//require bcryptjs
+const bcrypt = require('bcryptjs');
 
 
+//set up the bodyParser to be used in the router
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended : true }))
 /*
@@ -21,7 +26,7 @@ router.get('/users', async (req, res) => {
 
       //if authenticated, retrieve the user record based on their email address
 
-
+      
       res.status(200).end();
     } catch (error){
 
@@ -32,18 +37,26 @@ router.get('/users', async (req, res) => {
 
 //post route creates a new user, and returns a 201 status with no content, redirects to /
 router.post('/users', async (req, res) => {
-    // get user data from the request body
-    const user = req.body;
+    //use bcrypt to has the users password
+    const hashedPword = bcrypt.hashSync(req.body.password);
+
+    // get the user details
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const emailAddress = req.body.emailAddress;
+    // build the user so it can be passed to the create method with a single variable.
+    const user = {firstName, lastName, emailAddress, hashedPword};
 
     try {
       await User.create({user});
       // if successful creating the user, send a 201 response, and end.
       res.status(201).end();
       //redirect the user to the `/` route
+      res.redirect('/');
     } catch (error){
       console.error('Error occured adding user to the database', error);
     }
-    
+
 });
 
 /*
