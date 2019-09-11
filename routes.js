@@ -73,7 +73,7 @@ router.get('/users', authenticateUser, (req, res) => {
   // check if the user is authenticated
   const user = req.currentUser;
   //if authenticated, retrieve the user record based on their email address
-  if(user){
+  if(user) {
     res.json({user})
     res.status(200).end();
   } else {
@@ -100,7 +100,8 @@ router.post('/users', async (req, res) => {
       res.status(201).end();
       //redirect the user to the `/` route
       res.redirect('/');
-    } catch (error){
+    } catch (error) { 
+      //log the error, send the response, and close the request
       console.error('Error occured adding user to the database', error);
       res.status(400).json({message: 'Error creating new user'}).end();
     }
@@ -113,7 +114,7 @@ COURSE ROUTING-------------------------------//
 // get route retrieves all courses, including the user that owns that course. Returns 200 OK
 router.get('/courses', async (req, res) => {
   
-  try{
+  try { 
     //retrieve all courses from the DB
     const courses = await Course.findAll({
       include: [
@@ -126,12 +127,33 @@ router.get('/courses', async (req, res) => {
     // map through courses and provide as plain JSON
     res.json(courses.map(course => course.get({ plain : true})));
     res.status(200).end();
-  } catch (error){
+  } catch (error) {
+    //log the error, send the response, and close the request
     console.error('Error retrieving records from the database: ', error)
     res.status(400).json({message: 'Error retrieving courses from the database'}).end();
   }
   
   // end get courses route
 });
+
+// get route with an id param passed to retrieve a specific course -- returns 200 OK and the course info
+router.get('/courses/:id', async (req, res) => {
+
+  try {
+    //find the course by the id passed in the request
+    const course = await Course.findByPk(req.params.id)
+    //return the course as JSON in the response
+    res.json(course);
+  } catch (error) {
+    console.error('Error retrieving course from the database: ', error)
+    res.status(400).json({message: 'Error retrieving course from the database'}).end();
+  }
+//end get course w/ ID route
+})
+
+//post route to create a new course, sets the location header to the newly created course -- returns 201 and no info
+router.post('/courses', async (req,res) => {
+
+})
 
 module.exports = router;
