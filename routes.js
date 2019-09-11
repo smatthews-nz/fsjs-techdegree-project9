@@ -168,13 +168,20 @@ router.post('/courses', authenticateUser, async (req, res) => {
   const materialsNeeded = req.body.materialsNeeded;
   const estimatedTime = req.body.estimatedTime;
 
-  //build the new course object
-  const course = { title, description, owner, materialsNeeded, estimatedTime }; 
-
   if (user) {
 
     try{
-      await Course.create({course});
+      const course = await Course.create({
+        title,
+        description,
+        owner,
+        materialsNeeded,
+        estimatedTime
+      });
+
+      //set the response headers to the current course
+      res.setHeader('Location', course.id);
+      res.status(201).end();
     } catch (error) {
       console.error('Error creating new course: ', error);
       res.status(400).json({ message : 'Error creating a new course in the database'}).end();
@@ -184,6 +191,7 @@ router.post('/courses', authenticateUser, async (req, res) => {
     res.status(401).json({message: 'You must be authenticated to view this area'}).end();
   }
 
+  //end course creation route
 })
 
 module.exports = router;
