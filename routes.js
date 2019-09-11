@@ -57,7 +57,7 @@ USER AUTH MIDDLEWARE-------------------------------//
   if(message){
     console.warn(message);
     //return a 401 unauthorized error, and end the request
-    res.status(401).json({message: 'Access Denied'}).end();
+    res.status(401).json({message: 'You must be authenticated to view this area'}).end();
   } else {
     next();
   }
@@ -91,15 +91,18 @@ router.post('/users', async (req, res) => {
     const firstName = req.body.firstName;
     const lastName = req.body.lastName;
     const emailAddress = req.body.emailAddress;
-    // build the user so it can be passed to the create method with a single variable.
-    const user = {firstName, lastName, emailAddress, hashedPword};
 
     try {
-      await User.create({user});
+      await User.create({
+        firstName,
+        lastName,
+        emailAddress,
+        password: hashedPword
+      });
       // if successful creating the user, send a 201 response, and end.
       res.status(201).end();
-      //redirect the user to the `/` route
-      res.redirect('/');
+      //set the location header to `/`
+      res.setHeader('Location', '/');
     } catch (error) { 
       //log the error, send the response, and close the request
       console.error('Error occured adding user to the database', error);
@@ -144,6 +147,7 @@ router.get('/courses/:id', async (req, res) => {
     const course = await Course.findByPk(req.params.id)
     //return the course as JSON in the response
     res.json(course);
+    res.status(200).end();
   } catch (error) {
     console.error('Error retrieving course from the database: ', error)
     res.status(400).json({message: 'Error retrieving course from the database'}).end();
@@ -152,7 +156,33 @@ router.get('/courses/:id', async (req, res) => {
 })
 
 //post route to create a new course, sets the location header to the newly created course -- returns 201 and no info
-router.post('/courses', async (req,res) => {
+router.post('/courses', authenticateUser, async (req, res) => {
+
+  //check if user is authenticated
+  const user = req.currentUser;
+
+  //get the course details from the request
+  const title = req.body.title;
+  const description = req.body.description;
+  const owner = req.body.userId;
+  const materialsNeeded = req.body.materialsNeeded;
+  const estimatedTime = req.body.estimatedTime;
+
+  //build the new course object
+  const course = { title, description, owner, materialsNeeded, estimatedTime }; 
+
+  if (user) {
+
+    try{
+      await Course.create({course});
+    } catch (error) {
+      console.error('Error creating new course: ', error);
+      res.status(400).json({ message : 'Error creating a new course in the database'}).end();
+    }
+
+  } else {
+    res.status(401).json({message: 'You must be authenticated to view this area'}).end();
+  }
 
 })
 
