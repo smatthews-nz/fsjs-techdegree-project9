@@ -149,6 +149,7 @@ router.get('/courses/:id', async (req, res) => {
     res.json(course);
     res.status(200).end();
   } catch (error) {
+    //log the error, send the response, and close the request
     console.error('Error retrieving course from the database: ', error)
     res.status(400).json({message: 'Error retrieving course from the database'}).end();
   }
@@ -158,7 +159,7 @@ router.get('/courses/:id', async (req, res) => {
 //post route to create a new course, sets the location header to the newly created course -- returns 201 and no info
 router.post('/courses', authenticateUser, async (req, res) => {
 
-  //check if user is authenticated
+  //get the current user from the request
   const user = req.currentUser;
 
   //get the course details from the request
@@ -167,10 +168,11 @@ router.post('/courses', authenticateUser, async (req, res) => {
   const owner = req.body.userId;
   const materialsNeeded = req.body.materialsNeeded;
   const estimatedTime = req.body.estimatedTime;
-
+  //check if user is authenticated
   if (user) {
 
-    try{
+    try {  
+      //store the course in a variable so we can access the id propterty after creation
       const course = await Course.create({
         title,
         description,
@@ -183,15 +185,56 @@ router.post('/courses', authenticateUser, async (req, res) => {
       res.setHeader('Location', course.id);
       res.status(201).end();
     } catch (error) {
+      //log the error, send the response, and close the request
       console.error('Error creating new course: ', error);
       res.status(400).json({ message : 'Error creating a new course in the database'}).end();
     }
-
+    //if user is not authenticated
   } else {
-    res.status(401).json({message: 'You must be authenticated to view this area'}).end();
+    // set status to 401 unauthorized, and close the request
+    res.status(401).json({message: 'You must be logged in to create a course'}).end();
   }
 
   //end course creation route
+});
+// PUT route to update course details -- returns 204 No content returned
+router.put('/course/:id', async (req, res) => {
+  //TODO: write put route to update course details
+
+  //end put route to update course details
+})
+
+// DELETE route to delete a specific course -- returns 204 No content returned
+router.delete('/courses/:id', async (req, res) => {
+  //TODO: write the delete route to remove a specific course
+
+  //check if the user is logged in
+  
+  if (user) {
+    try {
+      // find the current course using req.params.id
+  
+      if(course){
+        //use sequelize delete to remove the course
+        
+  
+         //return 204, and end the response
+      } else {
+        //log a message that the course could not be found
+        
+        //return 400 bad request, and end the response 
+      }
+    } catch (error) {
+      //log the error, send the response, and close the request
+      console.error('Error creating deleting course: ', error);
+      res.status(400).json({ message : 'Error removing a new course from the database'}).end();
+    }
+  } else {
+     // set status to 401 unauthorized, and close the request
+     res.status(401).json({message: 'You must be logged in to delete a course'}).end();
+  }
+
+  //end delete route to remove a specific course
 })
 
 module.exports = router;
