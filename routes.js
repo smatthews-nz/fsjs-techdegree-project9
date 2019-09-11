@@ -102,6 +102,7 @@ router.post('/users', async (req, res) => {
       res.redirect('/');
     } catch (error){
       console.error('Error occured adding user to the database', error);
+      res.status(400).json({message: 'Error creating new user'}).end();
     }
     //end create new user route
 });
@@ -127,6 +128,7 @@ router.get('/courses', async (req, res) => {
     res.status(200).end();
   } catch (error){
     console.error('Error retrieving records from the database: ', error)
+    res.status(400).json({message: 'Error retrieving courses from the database'}).end();
   }
   
   // end get courses route
