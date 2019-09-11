@@ -17,4 +17,7 @@ const db = {
 db.models.User = require('./models/User')(sequelize);
 db.models.Course = require('./models/Course')(sequelize);
 
+db.models.Course.associate(db.models);
+db.models.User.associate(db.models);
+
 module.exports = db;

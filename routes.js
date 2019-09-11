@@ -109,7 +109,27 @@ router.post('/users', async (req, res) => {
 /*
 COURSE ROUTING-------------------------------//
 */
-
-
+// get route retrieves all courses, including the user that owns that course. Returns 200 OK
+router.get('/courses', async (req, res) => {
+  
+  try{
+    //retrieve all courses from the DB
+    const courses = await Course.findAll({
+      include: [
+        {
+          model: User,
+          as: 'Owner',
+        }
+      ]
+    });
+    // map through courses and provide as plain JSON
+    res.json(courses.map(course => course.get({ plain : true})));
+    res.status(200).end();
+  } catch (error){
+    console.error('Error retrieving records from the database: ', error)
+  }
+  
+  // end get courses route
+});
 
 module.exports = router;
