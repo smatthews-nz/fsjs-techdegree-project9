@@ -205,23 +205,25 @@ router.put('/course/:id', async (req, res) => {
 })
 
 // DELETE route to delete a specific course -- returns 204 No content returned
-router.delete('/courses/:id', async (req, res) => {
-  //TODO: write the delete route to remove a specific course
+router.delete('/courses/:id', authenticateUser, async (req, res) => {
 
   //check if the user is logged in
-  
+  const user = req.currentUser;
+
   if (user) {
     try {
       // find the current course using req.params.id
-  
+      const course = await Course.findByPk(req.params.id);
+      //if a course has been found
       if(course){
         //use sequelize delete to remove the course
-        
-  
-         //return 204, and end the response
+        await course.destroy();
+        res.status(204).end();
+        //return 204, and end the response
       } else {
         //log a message that the course could not be found
-        
+        console.error('A course with this ID could not be found');
+        res.status(400).json({ message: 'A course with this ID could not be found'}).end();
         //return 400 bad request, and end the response 
       }
     } catch (error) {
