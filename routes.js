@@ -205,9 +205,22 @@ router.put('/course/:id', authenticateUser, async (req, res) => {
   const user = req.currentUser;
 
   if(user){
-    //find the current course by using req.params.id
-    const course = await Course.findByPk(req.params.id);
     
+    try{ 
+      //find the current course by using req.params.id
+      const course = await Course.findByPk(req.params.id);
+      //update the course using the request body
+      await course.update(req.body);
+      //sends a 204 response, and end the response.
+      res.status(204).end();
+    } catch (error) {
+      //log the error, send the response, and close the request
+      console.error('Error updating the course: ', error);
+      res.status(400).json({ message : 'Error updating the course in the database'}).end();
+    }
+
+  } else {
+    res.status(401).json({ message: 'You must be logged in to update a course'}).end();
   }
 
   //end put route to update course details
