@@ -198,8 +198,17 @@ router.post('/courses', authenticateUser, async (req, res) => {
   //end course creation route
 });
 // PUT route to update course details -- returns 204 No content returned
-router.put('/course/:id', async (req, res) => {
+router.put('/course/:id', authenticateUser, async (req, res) => {
   //TODO: write put route to update course details
+
+  // check if the user is logged in
+  const user = req.currentUser;
+
+  if(user){
+    //find the current course by using req.params.id
+    const course = await Course.findByPk(req.params.id);
+    
+  }
 
   //end put route to update course details
 })
