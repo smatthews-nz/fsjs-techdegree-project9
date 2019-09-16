@@ -83,30 +83,20 @@ router.get('/users', authenticateUser, (req, res) => {
 });
 
 //post route creates a new user, and returns a 201 status with no content, redirects to /
-router.post('/users', async (req, res) => {
-    //use bcrypt to has the users password
-    const hashedPword = bcrypt.hashSync(req.body.password);
-
-    // get the user details
-    const firstName = req.body.firstName;
-    const lastName = req.body.lastName;
-    const emailAddress = req.body.emailAddress;
+router.post('/users', async (req, res, next) => {
 
     try {
       await User.create({
-        firstName,
-        lastName,
-        emailAddress,
-        password: hashedPword
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        emailAddress: req.body.lastName,
+        password: bcrypt.hashSync(req.body.password),
       });
       // if successful creating the user, send a 201 response, and end.
-      res.status(201).end();
-      //set the location header to `/`
-      res.setHeader('Location', '/');
+      res.status(201).location('/').end();
     } catch (error) { 
-      //log the error, send the response, and close the request
-      console.error('Error occured adding user to the database', error);
-      res.status(400).json({message: 'Error creating new user'}).end();
+      // pass the error to the global error handler
+      next(error)
     }
     //end create new user route
 });
