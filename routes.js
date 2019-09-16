@@ -232,31 +232,49 @@ router.post('/courses', [
 
 
 // PUT route to update course details -- returns 204 No content returned
-router.put('/course/:id', authenticateUser, async (req, res) => {
-  //TODO: write put route to update course details
-
+router.put('/courses/:id', [
+  validations.title,
+  validations.description
+], authenticateUser, async (req, res) => {
   // check if the user is logged in
   const user = req.currentUser;
+  //capture any errors in a variable
+  const errors = validationResult(req);
+  //if errors is not empty
+  if(!errors.isEmpty()){
+    // use the Array `map()` method to iterate through all error messages
+    const errorMessages = errors.array().map(error => error.msg);
+    // return the status 400 - bad request - and any error messages to the client
+    res.status(400).json({ errors: errorMessages });
+  } else { 
 
-  if(user){
-    
-    try{ 
-      //find the current course by using req.params.id
-      const course = await Course.findByPk(req.params.id);
-      //update the course using the request body
-      await course.update(req.body);
-      //sends a 204 response, and end the response.
-      res.status(204).end();
-    } catch (error) {
-      //log the error, send the response, and close the request
-      console.error('Error updating the course: ', error);
-      res.status(400).json({ message : 'Error updating the course in the database'}).end();
+    if(user){
+
+      try { 
+        //find the current course by using req.params.id
+        const course = await Course.findByPk(req.params.id);
+        //check if course is owned by the current user
+        if(user.id === course.userId){
+          //update the course using the request body
+          await course.update({
+          title: req.body.title,
+          description: req.body.description,
+          estimatedTime: req.body.estimatedTime,
+          materialsNeeded: req.body.materialsNeeded,
+          });
+          //sends a 204 response, and end the response.
+          res.status(204).end();
+        } else {
+          res.status(403).json({ error: 'You do not own this course. You must own this course to update it\'s content'});
+        }
+      } catch (error) {
+        //pass any other errors to the global error handler
+        next(error)
+      }
+    } else {
+      res.status(401).json({ message: 'You must be logged in to update a course'}).end();
     }
-
-  } else {
-    res.status(401).json({ message: 'You must be logged in to update a course'}).end();
   }
-
   //end put route to update course details
 })
 
@@ -272,10 +290,15 @@ router.delete('/courses/:id', authenticateUser, async (req, res) => {
       const course = await Course.findByPk(req.params.id);
       //if a course has been found
       if(course){
-        //use sequelize delete to remove the course
-        await course.destroy();
-        res.status(204).end();
-        //return 204, and end the response
+        //check if the user is the owner of the course
+        if(user.id === course.userId){
+          //use sequelize delete to remove the course
+          await course.destroy();
+          res.status(204).end();
+          //return 204, and end the response
+        } else {
+          res.status(403).json({ error: 'Sorry, only the owner of this course can delete this.'})
+        }
       } else {
         //log a message that the course could not be found
         console.error('A course with this ID could not be found');
@@ -283,9 +306,8 @@ router.delete('/courses/:id', authenticateUser, async (req, res) => {
         //return 400 bad request, and end the response 
       }
     } catch (error) {
-      //log the error, send the response, and close the request
-      console.error('Error creating deleting course: ', error);
-      res.status(400).json({ message : 'Error removing a new course from the database'}).end();
+      //pass any other errors to the global error handler
+      next(error);
     }
   } else {
      // set status to 401 unauthorized, and close the request
